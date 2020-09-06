@@ -1,0 +1,99 @@
+# depslib dependency file v1.0
+1597420086 source:e:\documents\arnob\project\library management system\main.cpp
+	"main.h"
+
+1599391783 e:\documents\arnob\project\library management system\main.h
+	<bits/stdc++.h>
+	"sqlite3.h"
+	"PERSON.h"
+	"BOOK.h"
+	"BOOL.h"
+	<thread>
+	<chrono>
+
+1592494518 e:\documents\arnob\project\library management system\sqlite3.h
+	<stdarg.h>
+
+1597416273 e:\documents\arnob\project\library management system\include\person.h
+	<bits/stdc++.h>
+	<thread>
+	<chrono>
+
+1592494518 source:e:\documents\arnob\project\library management system\sqlite3.c
+	"config.h"
+	<vxWorks.h>
+	<pthread.h>
+	"mingw.h"
+	"_mingw.h"
+	<stdarg.h>
+	<stdint.h>
+	<inttypes.h>
+	<intrin.h>
+	<cmnintrin.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<assert.h>
+	<stddef.h>
+	<TargetConditionals.h>
+	<ctype.h>
+	<time.h>
+	<sys/sysctl.h>
+	<malloc/malloc.h>
+	<libkern/OSAtomic.h>
+	<malloc.h>
+	<pthread.h>
+	"windows.h"
+	<sys/cygwin.h>
+	<errno.h>
+	<process.h>
+	<math.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<fcntl.h>
+	<sys/ioctl.h>
+	<unistd.h>
+	<sys/time.h>
+	<errno.h>
+	<sys/mman.h>
+	<sys/file.h>
+	<sys/param.h>
+	<semaphore.h>
+	<limits.h>
+	<sys/mount.h>
+	<utime.h>
+	<sys/dcmd_blk.h>
+	<sys/statvfs.h>
+	<dlfcn.h>
+	"sqlite_tcl.h"
+	"tcl.h"
+	<ctype.h>
+	"sqlite3rtree.h"
+	<ctype.h>
+	<unicode/utypes.h>
+	<unicode/uregex.h>
+	<unicode/ustring.h>
+	<unicode/ucol.h>
+	<unicode/ubrk.h>
+	<unicode/utf16.h>
+	<math.h>
+
+1597416252 source:e:\documents\arnob\project\library management system\src\person.cpp
+	"PERSON.h"
+
+1597420252 source:e:\documents\arnob\project\library management system\src\book.cpp
+	"BOOK.h"
+
+1597415006 e:\documents\arnob\project\library management system\include\book.h
+	<bits/stdc++.h>
+	<thread>
+	<chrono>
+
+1597418587 source:e:\documents\arnob\project\library management system\src\bool.cpp
+	"BOOL.h"
+
+1597418587 e:\documents\arnob\project\library management system\include\bool.h
+	<bits/stdc++.h>
+	<thread>
+	<chrono>
+

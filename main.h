@@ -838,7 +838,7 @@ void issue_book(int b_id)
     string sql = "INSERT INTO HISTORY("
                         "USERNAME, BOOK_ID, TYPE, "
                         "NUMBER_OF_BOOKS, DATE, TOTAL_COST) "
-                        "VALUES('" + loginusername +
+                        "VALUES('" + person.Getusername() +
                         "', " + to_string(b_id) +
                         ", 'ISSUE', 1, date('now'), 0)";
 
@@ -872,7 +872,6 @@ void modify_info_of_book(int b_id)
 {
     system("cls");
 
-    getchar();
     cout<<endl<<endl;
     cout<<"                                MODIFY BOOK                      "<<endl;
     cout<<endl;
@@ -919,27 +918,32 @@ void modify_info_of_book(int b_id)
         }
         cout<<endl;
 
-        bool f = 0;
-        sql = "UPDATE BOOKS "
-                    "SET ";
-        if(book.Getnumberofbooks() != -1){
-            f = 1;
-            sql += "NUMBER_OF_BOOKS = " + to_string(book.Getnumberofbooks());
+        if(book.Getnumberofbooks() == -1 && book.Getcost() == -1){
+            cout<<"                          NO INFORMATION UPDATED!                "<<endl;
         }
-        if(book.Getcost() != -1){
-            if(f)
-                sql += ",";
-            f = 1;
-            sql += "COST = " + to_string(book.Getcost());
+        else{
+            bool f = 0;
+            sql = "UPDATE BOOKS "
+                        "SET ";
+            if(book.Getnumberofbooks() != -1){
+                f = 1;
+                sql += "NUMBER_OF_BOOKS = " + to_string(book.Getnumberofbooks());
+            }
+            if(book.Getcost() != -1){
+                if(f)
+                    sql += ",";
+                f = 1;
+                sql += "COST = " + to_string(book.Getcost());
+            }
+            sql += " WHERE ID = " + to_string(b_id);
+
+            err = sqlite3_exec(DB, sql.c_str(), NULL, NULL, &error_message);
+
+            if(err != SQLITE_OK)
+                cout<<"         ERROR! "<<error_message<<endl;
+            else
+                cout<<"                         BOOK INFORMATION UPDATED!               "<<endl;
         }
-        sql += " WHERE ID = " + to_string(b_id);
-
-        err = sqlite3_exec(DB, sql.c_str(), NULL, NULL, &error_message);
-
-        if(err != SQLITE_OK)
-            cout<<"         ERROR! "<<error_message<<endl;
-        else
-            cout<<"                         BOOK INFORMATION UPDATED!               "<<endl;
     }
     else{
         cout<<"               SORRY, WE DID NOT FIND ANY BOOK WITH THIS ID!     "<<endl;
@@ -1293,7 +1297,7 @@ void show_details_of_particular_member(string s)
     cout<<"                                 DETAILS                         "<<endl;
     cout<<endl;
 
-    flag.particular_object_found = true;
+    flag.particular_object_found = false;
 
     string sql = "SELECT * FROM PERSONSTABLE "
                         "WHERE USERNAME = '" + s + "'";

@@ -26,8 +26,8 @@ class BOOL
     public:
         BOOL();
         bool admin_exists, admin_created, admin_logged_in;
-        bool user_logged_in, user_is_unique;
-        bool particular_object_found, book_is_unique;
+        bool user_logged_in;
+        bool particular_object_found, object_is_unique;
 };
 
 #endif // BOOL_H

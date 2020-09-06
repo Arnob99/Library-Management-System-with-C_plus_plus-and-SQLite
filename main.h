@@ -26,6 +26,7 @@ using namespace std::this_thread;
 using namespace std::chrono;
 
 enum class STATE{GOODBYE, SIGN_IN, MAIN_MENU};
+enum class CALLBACK{LOGIN, COUNT_OBJ, ALL_BOOKS, DET_BOOK, UNIQUE_AND_FOUND, ALL_MEMBERS, DET_MEMBER, ALL_HISTORY, DET_HISTORY};
 
 int maximum_number_of_object = 0;
 sqlite3 *DB = nullptr;
@@ -36,41 +37,33 @@ PERSON person;
 BOOK book;
 BOOL flag;
 STATE state;
+CALLBACK callback_state;
 
 void splash_screen();
 void check_admin_exists();
 void first_time();
 void create_admin();
 void initialize();
+int callback(void *notused, int argc, char **argv, char **azcolname);
 void sign_in_page();
 void log_in();
-int callback_for_login(void *notused, int argc, char **argv, char **azcolname);
 void sign_up();
-int check_unique_user(string s);
+bool check_unique_user();
 void show_home();
 void show_all_books();
-int callback_for_count_objects(void *notused, int argc, char **argv, char **azcolname);
-int callback_for_all_books(void *notused, int argc, char **argv, char **azcolname);
 void show_details_of_particular_book(ll b_id);
-int callback_for_details_of_book(void *notused, int argc, char **argv, char **azcolname);
 void issue_book(int b_id);
 void modify_info_of_book(int b_id);
-int callback_for_modify_book(void *notused, int argc, char **argv, char **azcolname);
 void delete_book(int b_id);
 void search_for_book();
 void add_book();
 void check_unique_book();
-int callback_for_check_unique_book(void *notused, int argc, char **argv, char **azcolname);
 void show_all_members();
-int callback_for_all_members(void *notused, int argc, char **argv, char **azcolname);
 void show_details_of_particular_member(string username);
-int callback_for_details_of_member(void *notused, int argc, char **argv, char **azcolname);
 void delete_member(string s);
 void search_for_member();
 void show_history();
-int callback_for_all_history(void *notused, int argc, char **argv, char **azcolname);
 void show_details_of_particular_history(ll h_id);
-int callback_for_details_of_history(void *notused, int argc, char **argv, char **azcolname);
 void goodbye_screen();
 
 void splash_screen() /// just a splash screen
@@ -98,10 +91,10 @@ void check_admin_exists()
     auto err = sqlite3_exec(DB, sql.c_str(), NULL, NULL, &error_message);
 
     if(err != SQLITE_OK)
-        flag.admin_exists = 0; /// no table, no admin
+        flag.admin_exists = false; /// no table, no admin
     else{
-        flag.admin_exists = 1; /// there is a table, so there is an admin
-        flag.admin_created = 1; /// there is a table, so admin is already created
+        flag.admin_exists = true; /// there is a table, so there is an admin
+        flag.admin_created = true; /// there is a table, so admin is already created
     }
 
     return;
@@ -139,7 +132,7 @@ void first_time()
 
     char c = getchar();
     if(c == 'y' || c == 'Y'){
-        flag.admin_created = 0;
+        flag.admin_created = false;
         return;
     }
 
@@ -187,7 +180,7 @@ void create_admin()
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
     else
-        flag.admin_created = 1; /// admin has just been created
+        flag.admin_created = true; /// admin has just been created
 
     cout<<endl;
     cout<<"                       ADMIN CREATED SUCCESSFULLY!               "<<endl;
@@ -260,11 +253,134 @@ void initialize()
         cout<<"         ERROR! "<<error_message<<endl;
 }
 
+int callback(void *notused, int argc, char **argv, char **azcolname)
+{
+    if(callback_state == CALLBACK::LOGIN){
+        for(int i=0; i<argc; i+=2){
+            if(person.Getusername() == argv[i]){
+                /// if username matches then this username is not free to new sign ups
+
+                if(person.Getpassword() == argv[i+1]){
+                    flag.user_logged_in = true;
+                    break;
+                }
+            }
+        }
+
+        return 0;
+    }
+    else if(callback_state == CALLBACK::COUNT_OBJ){
+        for(int i=0; i<argc; i++){
+            if(argv[i] == NULL)
+                maximum_number_of_object = 0;
+            else
+                maximum_number_of_object = stoi(argv[i]);
+        }
+
+        return 0;
+    }
+    else if(callback_state == CALLBACK::ALL_BOOKS){
+        flag.particular_object_found = true;
+
+        cout<<left<<"         ";
+        for(ll i=0; i<argc; i++){
+            string s = argv[i];
+            if(azcolname[i] == string("ID"))
+                cout<<setw(5)<<s.substr(0, 5)<<"  ";
+            if(azcolname[i] == string("NAME"))
+                cout<<setw(25)<<s.substr(0, 25)<<"  ";
+            if(azcolname[i] == string("AUTHOR_NAME"))
+                cout<<setw(20)<<s.substr(0, 20)<<endl;
+        }
+
+        return 0;
+    }
+    else if(callback_state == CALLBACK::DET_BOOK){
+        flag.particular_object_found = true;
+
+        for(ll i=0; i<argc; i++){
+            cout<<"         "<<setw(20)<<azcolname[i];
+            cout<<" : "<<argv[i]<<endl;
+        }
+
+        return 0;
+    }
+    else if(callback_state == CALLBACK::UNIQUE_AND_FOUND){
+        flag.particular_object_found = true;
+        flag.object_is_unique = false;
+
+        return 0;
+    }
+    else if(callback_state == CALLBACK::ALL_MEMBERS){
+        flag.particular_object_found = true;
+
+        cout<<left<<"         ";
+        for(ll i=0; i<argc; i++){
+            string s = argv[i];
+            if(azcolname[i] == string("NAME"))
+                cout<<setw(25)<<s.substr(0, 25)<<"  ";
+            if(azcolname[i] == string("USERNAME"))
+                cout<<setw(15)<<s.substr(0, 15)<<"  ";
+            if(azcolname[i] == string("DEPARTMENT"))
+                cout<<setw(10)<<s.substr(0, 10)<<endl;
+        }
+
+        return 0;
+    }
+    else if(callback_state == CALLBACK::DET_MEMBER){
+        flag.particular_object_found = true;
+        string s;
+
+        for(ll i=0; i<argc; i++){
+            s = argv[i];
+            if(azcolname[i] == string("TYPE")){
+                if(s == "1")
+                    s = "STUDENT";
+                else if(s == "2")
+                    s = "TEACHER";
+            }
+            cout<<"         "<<setw(11)<<azcolname[i];
+            cout<<" : "<<s<<endl;
+        }
+
+        return 0;
+    }
+    else if(callback_state == CALLBACK::ALL_HISTORY){
+        flag.particular_object_found = true;
+
+        cout<<left<<"         ";
+        for(ll i=0; i<argc; i++){
+            string s = argv[i];
+            if(azcolname[i] == string("HISTORY_ID"))
+                cout<<setw(5)<<s.substr(0, 5)<<"  ";
+            if(azcolname[i] == string("USERNAME"))
+                cout<<setw(15)<<s.substr(0, 15)<<"  ";
+            if(azcolname[i] == string("BOOK_ID"))
+                cout<<setw(7)<<s.substr(0, 7)<<"  ";
+            if(azcolname[i] == string("TYPE"))
+                cout<<setw(10)<<s.substr(0, 10)<<endl;
+        }
+
+        return 0;
+    }
+    else if(callback_state == CALLBACK::DET_HISTORY){
+        flag.particular_object_found = true;
+
+        for(ll i=0; i<argc; i++){
+            cout<<"         "<<setw(15)<<azcolname[i];
+            cout<<" : "<<argv[i]<<endl;
+        }
+
+        return 0;
+    }
+
+}
+
 void sign_in_page()
 {
     system("cls");
 
-    flag.user_logged_in = 0;
+    flag.user_logged_in = false;
 
     cout<<endl<<endl;
     cout<<"         CHOOSE ONE OPTION :                                     "<<endl;
@@ -300,36 +416,38 @@ void log_in()
     cout<<endl<<endl;
     cout<<"                                   LOGIN                         "<<endl;
     cout<<endl;
-    cout<<"         USERNAME : ";   cin>>loginusername;
-    cout<<"         PASSWORD : ";   cin>>loginpassword;
+    cout<<"         USERNAME : ";   person.Setusername();
+    cout<<"         PASSWORD : ";   person.Setpassword();
     getchar();
     cout<<endl<<endl;
 
-    flag.admin_logged_in = 0;
+    flag.admin_logged_in = false;
 
     /// checks the login username in the admintable first
 
     string sql = "SELECT * FROM ADMINTABLE "
-                        "WHERE USERNAME = '" + loginusername +
-                        "' AND PASSWORD = '" + loginpassword +
+                        "WHERE USERNAME = '" + person.Getusername() +
+                        "' AND PASSWORD = '" + person.Getpassword() +
                         "'";
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_login, NULL, &error_message);
+    callback_state = CALLBACK::LOGIN;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
 
     if(flag.user_logged_in)
-        flag.admin_logged_in = 1;
+        flag.admin_logged_in = true;
     else{
         /// if the login username is not found in admintable, checks in userstable
 
         sql = "SELECT * FROM USERSTABLE "
-                    "WHERE USERNAME = '" + loginusername +
-                    "' AND PASSWORD = '" + loginpassword +
+                    "WHERE USERNAME = '" + person.Getusername() +
+                    "' AND PASSWORD = '" + person.Getpassword() +
                     "'";
 
-        err = sqlite3_exec(DB, sql.c_str(), callback_for_login, NULL, &error_message);
+        callback_state = CALLBACK::LOGIN;
+        err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
         if(err != SQLITE_OK)
             cout<<"         ERROR! "<<error_message<<endl;
@@ -346,25 +464,6 @@ void log_in()
     cout<<"                         PRESS ENTER TO CONTINUE!                "<<endl;
     cout<<"                                     ";
     getchar();
-}
-
-int callback_for_login(void *notused, int argc, char **argv, char **azcolname) /// checks for login username in table and matches login password
-{
-    for(int i=0; i<argc; i+=2){
-        if(loginusername == argv[i]){
-            /// if username matches then this username is not free to new sign ups
-            /// user_is_unique flag is used in check_unique_user function
-
-            flag.user_is_unique = 0;
-
-            if(loginpassword == argv[i+1]){
-                flag.user_logged_in = 1;
-                break;
-            }
-        }
-    }
-
-    return 0;
 }
 
 void sign_up()
@@ -392,7 +491,7 @@ void sign_up()
 
     /// until an username is not unique, user cannot create his account
 
-    while(!check_unique_user(person.Getusername())){
+    while(!check_unique_user()){
         cout<<endl;
         cout<<"         THAT USERNAME IS ALREADY TAKEN! "<<endl<<endl;
         cout<<"         USERNAME        : "; person.Setusername();
@@ -486,35 +585,36 @@ void sign_up()
     return;
 }
 
-int check_unique_user(string s)
+bool check_unique_user()
 {
     /// checks if the intended username is unique in admintable
 
-    loginusername = s;
-    flag.user_is_unique = 1;
+    flag.object_is_unique = true;
 
     string sql = "SELECT * FROM ADMINTABLE "
-                        "WHERE USERNAME = '" + loginusername +
+                        "WHERE USERNAME = '" + person.Getusername() +
                         "'";
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_login, NULL, &error_message);
+    callback_state = CALLBACK::UNIQUE_AND_FOUND;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
 
-    if(flag.user_is_unique){
+    if(flag.object_is_unique){
         /// if username is unique in admintable, checks if the username is unique in usertable
         sql = "SELECT * FROM USERSTABLE "
-                    "WHERE USERNAME = '" + s +
+                    "WHERE USERNAME = '" + person.Getusername() +
                     "'";
 
-        err = sqlite3_exec(DB, sql.c_str(), callback_for_login, NULL, NULL);
+        callback_state = CALLBACK::UNIQUE_AND_FOUND;
+        err = sqlite3_exec(DB, sql.c_str(), callback, NULL, NULL);
 
         if(err != SQLITE_OK)
             cout<<"         ERROR! "<<error_message<<endl;
     }
 
-    return flag.user_is_unique;
+    return flag.object_is_unique;
 }
 
 void show_home()
@@ -565,7 +665,8 @@ void show_home()
     else if(i == 6)
         show_history();
     else if(i == 0){
-        flag.admin_logged_in = 0; /// even if admin did not login, when signs out, anyone including admin is logged out
+        flag.admin_logged_in = false; /// even if admin did not login, when signs out, anyone including admin is logged out
+        flag.user_logged_in = false;
         state = STATE::SIGN_IN;
         return;
     }
@@ -578,7 +679,8 @@ void show_all_books()
 
     string sql = "SELECT COUNT(ID) FROM BOOKS";
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_count_objects, NULL, &error_message);
+    callback_state = CALLBACK::COUNT_OBJ;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
@@ -599,9 +701,10 @@ void show_all_books()
                     "ORDER BY NAME LIMIT " + to_string(limit) +
                     ", 20";
 
-        flag.particular_object_found = 0;
+        flag.particular_object_found = false;
 
-        err = sqlite3_exec(DB, sql.c_str(), callback_for_all_books, NULL, &error_message);
+        callback_state = CALLBACK::ALL_BOOKS;
+        err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
         if(err != SQLITE_OK)
             cout<<"         ERROR! "<<error_message<<endl;
@@ -658,37 +761,6 @@ void show_all_books()
     return;
 }
 
-int callback_for_count_objects(void *notused, int argc, char **argv, char **azcolname)
-{
-    for(int i=0; i<argc; i++){
-        if(argv[i] == NULL)
-            maximum_number_of_object = 0;
-        else
-            maximum_number_of_object = stoi(argv[i]);
-    }
-
-    return 0;
-}
-
-int callback_for_all_books(void *notused, int argc, char **argv, char **azcolname)
-{
-    flag.particular_object_found = 1;
-
-    cout<<left<<"         ";
-    for(ll i=0; i<argc; i++){
-        string s = argv[i];
-        if(azcolname[i] == string("ID"))
-            cout<<setw(5)<<s.substr(0, 5)<<"  ";
-        if(azcolname[i] == string("NAME"))
-            cout<<setw(25)<<s.substr(0, 25)<<"  ";
-        if(azcolname[i] == string("AUTHOR_NAME"))
-            cout<<setw(20)<<s.substr(0, 20)<<endl;
-//        if(azcolname[i] == string("COST"))
-//            cout<<endl;
-    }
-    return 0;
-}
-
 void show_details_of_particular_book(ll b_id)
 {
     system("cls");
@@ -697,12 +769,13 @@ void show_details_of_particular_book(ll b_id)
     cout<<"                                 DETAILS                         "<<endl;
     cout<<endl;
 
-    flag.particular_object_found = 0;
+    flag.particular_object_found = false;
 
     string sql = "SELECT * FROM BOOKS "
                         "WHERE ID = " + to_string(b_id);
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_details_of_book, NULL, &error_message);
+    callback_state = CALLBACK::DET_BOOK;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
@@ -732,17 +805,18 @@ void show_details_of_particular_book(ll b_id)
         cout<<"         YOUR CHOICE >>> ";
     }
 
-    flag.particular_object_found = 0;
+    flag.particular_object_found = false;
 
     if(i == 0)
         return;
-    else if(i == 1 && !flag.admin_logged_in){
+    else if(i == 1){
         getchar();
-        issue_book(b_id);
-        return;
+
+        if(!flag.admin_logged_in)
+            issue_book(b_id);
+        else if(flag.admin_logged_in)
+            modify_info_of_book(b_id);
     }
-    else if(i == 1 && flag.admin_logged_in)
-        modify_info_of_book(b_id);
     else if(i == 2){
         cout<<"         ARE YOU SURE YOU WANT TO DELETE THIS BOOK ?             "<<endl;
         cout<<"         TYPE 'YES' TO DELETE, OTHERWISE IT WILL NOT DELETE.     "<<endl;
@@ -755,17 +829,6 @@ void show_details_of_particular_book(ll b_id)
     }
 
     return;
-}
-
-int callback_for_details_of_book(void *notused, int argc, char **argv, char **azcolname)
-{
-    flag.particular_object_found = 1;
-    for(ll i=0; i<argc; i++){
-        cout<<"         "<<setw(20)<<azcolname[i];
-        cout<<" : "<<argv[i]<<endl;
-    }
-
-    return 0;
 }
 
 void issue_book(int b_id)
@@ -814,12 +877,13 @@ void modify_info_of_book(int b_id)
     cout<<"                                MODIFY BOOK                      "<<endl;
     cout<<endl;
 
-    flag.particular_object_found = 0;
+    flag.particular_object_found = false;
 
     string sql = "SELECT * FROM BOOKS "
                         "WHERE ID = " + to_string(b_id);
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_modify_book, NULL, &error_message);
+    callback_state = CALLBACK::UNIQUE_AND_FOUND;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
@@ -888,19 +952,12 @@ void modify_info_of_book(int b_id)
     return;
 }
 
-int callback_for_modify_book(void *notused, int argc, char **argv, char **azcolname)
-{
-    flag.particular_object_found = 1;
-
-    return 0;
-}
-
 void delete_book(int b_id)
 {
     string sql = "INSERT INTO HISTORY("
                         "USERNAME, BOOK_ID, TYPE, "
                         "NUMBER_OF_BOOKS, DATE, TOTAL_COST) "
-                        "VALUES('" + loginusername +
+                        "VALUES('" + person.Getusername() +
                         "', " + to_string(b_id) +
                         ", 'DELETE', -1, date('now'), 0)";
 
@@ -946,9 +1003,10 @@ void search_for_book()
     string sql = "SELECT * FROM BOOKS "
                         "WHERE NAME LIKE '%" + book.Getname() + "%'";
 
-    flag.particular_object_found = 0;
+    flag.particular_object_found = false;
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_all_books, NULL, &error_message);
+    callback_state = CALLBACK::ALL_BOOKS;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
@@ -958,7 +1016,7 @@ void search_for_book()
     cout<<endl;
     if(flag.particular_object_found)
         cout<<"             1. SHOW DETAILS OF A PARTICULAR BOOK                    "<<endl;
-    flag.particular_object_found = 0;
+    flag.particular_object_found = false;
     cout<<"             0. GO BACK TO MAIN MENU                             "<<endl;
     cout<<endl;
     cout<<"         YOUR CHOICE >>> ";
@@ -1028,16 +1086,17 @@ void add_book()
     }
     cout<<endl;
 
-    flag.book_is_unique = 1;
+    flag.object_is_unique = true;
 
     check_unique_book();
 
-    if(flag.book_is_unique){
+    if(flag.object_is_unique){
         maximum_number_of_object = 0;
 
         string sql = "SELECT MAX(ID) FROM BOOKS";
 
-        auto err = sqlite3_exec(DB, sql.c_str(), callback_for_count_objects, NULL, &error_message);
+        callback_state = CALLBACK::COUNT_OBJ;
+        auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
         if(err != SQLITE_OK)
             cout<<"         ERROR! "<<error_message<<endl;
@@ -1045,7 +1104,7 @@ void add_book()
         sql = "INSERT INTO HISTORY("
                             "USERNAME, BOOK_ID, TYPE, "
                             "NUMBER_OF_BOOKS, DATE, TOTAL_COST) "
-                            "VALUES('" + loginusername +
+                            "VALUES('" + person.Getusername() +
                             "', " + to_string(maximum_number_of_object + 1) +
                             ", 'BUY', " + to_string(book.Getnumberofbooks()) +
                             ", date('now'), " + to_string(book.Getnumberofbooks() * book.Getcost()) + ")";
@@ -1082,7 +1141,8 @@ void add_book()
                             "' AND PUBLISHER = '" + book.Getpublisher() +
                             "' AND COST = " + to_string(book.Getcost());
 
-        auto err = sqlite3_exec(DB, sql.c_str(), callback_for_count_objects, NULL, &error_message);
+        callback_state = CALLBACK::COUNT_OBJ;
+        auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
         if(err != SQLITE_OK)
             cout<<"         ERROR! "<<error_message<<endl;
@@ -1130,17 +1190,11 @@ void check_unique_book()
                         "' AND PUBLISHER = '" + book.Getpublisher() +
                         "' AND COST = " + to_string(book.Getcost());
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_check_unique_book, NULL, &error_message);
+    callback_state = CALLBACK::UNIQUE_AND_FOUND;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
-}
-
-int callback_for_check_unique_book(void *notused, int argc, char **argv, char **azcolname)
-{
-    flag.book_is_unique = 0;
-
-    return 0;
 }
 
 void show_all_members()
@@ -1150,7 +1204,8 @@ void show_all_members()
 
     string sql = "SELECT COUNT(USERNAME) FROM PERSONSTABLE";
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_count_objects, NULL, &error_message);
+    callback_state = CALLBACK::COUNT_OBJ;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
@@ -1172,9 +1227,10 @@ void show_all_members()
                     "ORDER BY NAME LIMIT " + to_string(limit) +
                     ", 20";
 
-        flag.particular_object_found = 0;
+        flag.particular_object_found = false;
 
-        err = sqlite3_exec(DB, sql.c_str(), callback_for_all_members, NULL, &error_message);
+        callback_state = CALLBACK::ALL_MEMBERS;
+        err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
         if(err != SQLITE_OK)
             cout<<"         ERROR! "<<error_message<<endl;
@@ -1190,14 +1246,15 @@ void show_all_members()
         cout<<"             3. GO TO A PARTICULAR PAGE                          "<<endl;
         if(flag.particular_object_found)
             cout<<"             4. SHOW DETAILS OF PARTICULAR MEMBER                  "<<endl;
-        flag.particular_object_found = 0;
         cout<<endl;
         cout<<"         0. GO BACK TO MAIN MENU                                 "<<endl;
         cout<<endl;
         ll i, j;
         cout<<"         YOUR CHOICE >>> ";
         while(cin>>i){
-            if(i>=0 && i<=4)
+            if(i>=0 && i<=3)
+                break;
+            if(i == 4 && flag.particular_object_found)
                 break;
 
             cout<<"         INVALID INPUT!"<<endl;
@@ -1228,24 +1285,6 @@ void show_all_members()
     }
 }
 
-int callback_for_all_members(void *notused, int argc, char **argv, char **azcolname)
-{
-    flag.particular_object_found = 1;
-
-    cout<<left<<"         ";
-    for(ll i=0; i<argc; i++){
-        string s = argv[i];
-        if(azcolname[i] == string("NAME"))
-            cout<<setw(25)<<s.substr(0, 25)<<"  ";
-        if(azcolname[i] == string("USERNAME"))
-            cout<<setw(15)<<s.substr(0, 15)<<"  ";
-        if(azcolname[i] == string("DEPARTMENT"))
-            cout<<setw(10)<<s.substr(0, 10)<<endl;
-    }
-
-    return 0;
-}
-
 void show_details_of_particular_member(string s)
 {
     system("cls");
@@ -1254,12 +1293,13 @@ void show_details_of_particular_member(string s)
     cout<<"                                 DETAILS                         "<<endl;
     cout<<endl;
 
-    flag.particular_object_found = 0;
+    flag.particular_object_found = true;
 
     string sql = "SELECT * FROM PERSONSTABLE "
                         "WHERE USERNAME = '" + s + "'";
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_details_of_member, NULL, &error_message);
+    callback_state = CALLBACK::DET_MEMBER;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     cout<<endl;
 
@@ -1296,23 +1336,6 @@ void show_details_of_particular_member(string s)
     }
 
     return;
-}
-
-int callback_for_details_of_member(void *notused, int argc, char **argv, char **azcolname)
-{
-    flag.particular_object_found = 1;
-    string s;
-    for(ll i=0; i<argc; i++){
-        s = argv[i];
-        if(azcolname[i] == string("TYPE") && s == "1")
-            s = "STUDENT";
-        if(azcolname[i] == string("TYPE") && s == "2")
-            s = "TEACHER";
-        cout<<"         "<<setw(11)<<azcolname[i];
-        cout<<" : "<<s<<endl;
-    }
-
-    return 0;
 }
 
 void delete_member(string s)
@@ -1364,9 +1387,10 @@ void search_for_member()
     string sql = "SELECT * FROM PERSONSTABLE "
                         "WHERE NAME LIKE '%" + person.Getname() + "%'";
 
-    flag.particular_object_found = 0;
+    flag.particular_object_found = false;
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_all_members, NULL, &error_message);
+    callback_state = CALLBACK::ALL_MEMBERS;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
@@ -1379,7 +1403,7 @@ void search_for_member()
         cout<<endl;
     }
 
-    flag.particular_object_found = 0;
+    flag.particular_object_found = false;
 
     cout<<"             0. GO BACK TO MAIN MENU                             "<<endl;
     cout<<endl;
@@ -1408,7 +1432,8 @@ void show_history()
 
     string sql = "SELECT COUNT(ID) FROM HISTORY";
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_count_objects, NULL, &error_message);
+    callback_state = CALLBACK::COUNT_OBJ;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
@@ -1428,9 +1453,10 @@ void show_history()
         sql = "SELECT * FROM HISTORY "
                     "LIMIT " + to_string(limit) + ", 20";
 
-        flag.particular_object_found = 0;
+        flag.particular_object_found = false;
 
-        err = sqlite3_exec(DB, sql.c_str(), callback_for_all_history, NULL, &error_message);
+        callback_state = CALLBACK::ALL_HISTORY;
+        err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
         if(err != SQLITE_OK)
             cout<<"         ERROR! "<<error_message<<endl;
@@ -1495,12 +1521,13 @@ void show_details_of_particular_history(ll h_id)
     cout<<"                                 DETAILS                         "<<endl;
     cout<<endl;
 
-    flag.particular_object_found = 0;
+    flag.particular_object_found = false;
 
     string sql = "SELECT * FROM HISTORY "
                         "WHERE HISTORY_ID = " + to_string(h_id);
 
-    auto err = sqlite3_exec(DB, sql.c_str(), callback_for_details_of_history, NULL, &error_message);
+    callback_state = CALLBACK::DET_HISTORY;
+    auto err = sqlite3_exec(DB, sql.c_str(), callback, NULL, &error_message);
 
     if(err != SQLITE_OK)
         cout<<"         ERROR! "<<error_message<<endl;
@@ -1515,38 +1542,6 @@ void show_details_of_particular_history(ll h_id)
     getchar();
 
     return;
-}
-
-int callback_for_details_of_history(void *notused, int argc, char **argv, char **azcolname)
-{
-    flag.particular_object_found = 1;
-
-    for(ll i=0; i<argc; i++){
-        cout<<"         "<<setw(15)<<azcolname[i];
-        cout<<" : "<<argv[i]<<endl;
-    }
-
-    return 0;
-}
-
-int callback_for_all_history(void *notused, int argc, char **argv, char **azcolname)
-{
-    flag.particular_object_found = 1;
-
-    cout<<left<<"         ";
-    for(ll i=0; i<argc; i++){
-        string s = argv[i];
-        if(azcolname[i] == string("HISTORY_ID"))
-            cout<<setw(5)<<s.substr(0, 5)<<"  ";
-        if(azcolname[i] == string("USERNAME"))
-            cout<<setw(15)<<s.substr(0, 15)<<"  ";
-        if(azcolname[i] == string("BOOK_ID"))
-            cout<<setw(7)<<s.substr(0, 7)<<"  ";
-        if(azcolname[i] == string("TYPE"))
-            cout<<setw(10)<<s.substr(0, 10)<<endl;
-    }
-
-    return 0;
 }
 
 void goodbye_screen()

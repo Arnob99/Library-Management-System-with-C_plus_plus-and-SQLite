@@ -32,7 +32,7 @@ int maximum_number_of_object = 0;
 sqlite3 *DB = nullptr;
 const char* database = "Library_Management_System.db";
 char *error_message;
-string loginusername, loginpassword;
+string loginpassword;
 PERSON person;
 BOOK book;
 BOOL flag;
@@ -477,7 +477,6 @@ void sign_up()
     /// user may want to go back any time
     /// so whenever '0' is entered, it will go back to main menu
 
-    loginusername = "";
     loginpassword = "";
 
     cout<<endl;

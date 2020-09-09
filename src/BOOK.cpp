@@ -1,6 +1,9 @@
 #include "BOOK.h"
 
-BOOK::BOOK():name(""), author(""), publisher(""), dateofpublish(""), numberofbooks(0), cost(0) {}
+BOOK::BOOK():id(0), name(""), author(""), publisher(""), dateofpublish(""), numberofbooks(0), cost(0) {}
+
+int BOOK::Getid() { return id; }
+void BOOK::Setid() { cin>>id; }
 
 string BOOK::Getname() { return name; }
 void BOOK::Setname() { getline(cin, name); }

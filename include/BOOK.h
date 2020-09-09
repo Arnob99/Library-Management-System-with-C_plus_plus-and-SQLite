@@ -26,6 +26,9 @@ class BOOK
 public:
     BOOK();
 
+    int Getid();
+    void Setid();
+
     string Getname();
     void Setname();
 
@@ -45,6 +48,7 @@ public:
     void Setcost();
 
 private:
+    int id;
     string name;
     string author;
     string publisher;

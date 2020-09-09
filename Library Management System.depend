@@ -1,8 +1,8 @@
 # depslib dependency file v1.0
-1597420086 source:e:\documents\arnob\project\library management system\main.cpp
+1599658953 source:e:\documents\arnob\project\library management system\main.cpp
 	"main.h"
 
-1599456672 e:\documents\arnob\project\library management system\main.h
+1599679930 e:\documents\arnob\project\library management system\main.h
 	<bits/stdc++.h>
 	"sqlite3.h"
 	"PERSON.h"
@@ -81,10 +81,10 @@
 1597416252 source:e:\documents\arnob\project\library management system\src\person.cpp
 	"PERSON.h"
 
-1597420252 source:e:\documents\arnob\project\library management system\src\book.cpp
+1599679392 source:e:\documents\arnob\project\library management system\src\book.cpp
 	"BOOK.h"
 
-1597415006 e:\documents\arnob\project\library management system\include\book.h
+1599679392 e:\documents\arnob\project\library management system\include\book.h
 	<bits/stdc++.h>
 	<thread>
 	<chrono>

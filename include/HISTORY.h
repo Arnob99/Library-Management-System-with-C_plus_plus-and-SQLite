@@ -24,6 +24,9 @@ using namespace std::chrono;
 class HISTORY
 {
 public:
+    string username;
+    int book_id;
+
     HISTORY();
 
     int Getid();
@@ -49,8 +52,6 @@ public:
 
 private:
     int id;
-    string username;
-    int book_id;
     string type;
     int number_of_books;
     string starting_date;

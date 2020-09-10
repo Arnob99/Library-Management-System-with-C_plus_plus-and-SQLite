@@ -371,6 +371,10 @@ int callback(void *notused, int argc, char **argv, char **azcolname)
         for(ll i=0; i<argc; i++){
             cout<<"         "<<setw(15)<<azcolname[i];
             cout<<" : "<<argv[i]<<endl;
+            if(azcolname[i] == string("USERNAME"))
+                history.username = argv[i];
+            if(azcolname[i] == string("BOOK_ID"))
+                history.book_id = stoi(argv[i]);
         }
 
         return 0;
@@ -1543,14 +1547,34 @@ void show_history(ll h_id)
 
     if(!flag.particular_object_found)
         cout<<"               SORRY, WE DO NOT HAVE ANY BOOK WITH THIS ID!      "<<endl;
+    else{
+        cout<<endl;
+        cout<<"             1. GO TO USERNAME                                   "<<endl;
+        cout<<"             2. GO TO BOOK ID                                    "<<endl;
+    }
+    cout<<endl;
+    cout<<"         0. GO BACK                                              "<<endl;
+    cout<<endl;
+    cout<<"         >>> ";
 
-    cout<<endl<<endl;
-    getchar();
-    cout<<"                         PRESS ENTER TO CONTINUE!                "<<endl;
-    cout<<"                                     ";
-    getchar();
+    ll i;
+    while(cin>>i){
+        if(i == 0)
+            break;
+        if(i>=1 && i<=2 && flag.particular_object_found)
+            break;
 
-    return;
+        cout<<"         INVALID INPUT! "<<endl;
+        cout<<"         >>> ";
+    }
+
+    if(i == 0)
+        return;
+    else if(i == 1)
+        show_members(history.Getusername());
+    else if(i == 2)
+        show_books(history.Getbook_id());
+
 }
 
 void search_for_history()

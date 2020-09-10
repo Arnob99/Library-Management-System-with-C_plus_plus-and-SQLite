@@ -36,6 +36,7 @@
 		</Compiler>
 		<Unit filename="include/BOOK.h" />
 		<Unit filename="include/BOOL.h" />
+		<Unit filename="include/HISTORY.h" />
 		<Unit filename="include/PERSON.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="main.h" />
@@ -46,6 +47,7 @@
 		<Unit filename="sqlite3ext.h" />
 		<Unit filename="src/BOOK.cpp" />
 		<Unit filename="src/BOOL.cpp" />
+		<Unit filename="src/HISTORY.cpp" />
 		<Unit filename="src/PERSON.cpp" />
 		<Extensions>
 			<code_completion />

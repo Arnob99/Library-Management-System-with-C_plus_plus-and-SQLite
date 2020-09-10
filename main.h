@@ -6,6 +6,7 @@
 #include "PERSON.h"
 #include "BOOK.h"
 #include "BOOL.h"
+#include "HISTORY.h"
 #include<thread>
 #include<chrono>
 #define pi              acos(-1)
@@ -36,6 +37,7 @@ string loginpassword;
 PERSON person;
 BOOK book;
 BOOL flag;
+HISTORY history;
 STATE state;
 CALLBACK callback_state;
 
@@ -1570,6 +1572,7 @@ void search_for_history()
 
     ll i;
     while(cin>>i){
+        cout<<endl;
         if(i>=0 && i<=3)
             break;
         cout<<"         INVALID INPUT!                                          "<<endl;
@@ -1582,16 +1585,18 @@ void search_for_history()
     if(i == 0)
         return;
     else if(i == 1){
-        cout<<"         USERNAME : "; person.Setusername();
-        sql += "USERNAME = '" + person.Getusername() + "'";
+        cout<<"         USERNAME : "; history.Setusername();
+        sql += "USERNAME = '" + history.Getusername() + "'";
     }
     else if(i == 2){
-        cout<<"         BOOK ID : "; book.Setid();
-        sql += "BOOK_ID = " + to_string(book.Getid());
+        cout<<"         BOOK ID : "; history.Setbook_id();
+        sql += "BOOK_ID = " + to_string(history.Getbook_id());
     }
     else if(i == 3){
-        cout<<"         ENTER DATE(YYYY-MM-DD) : "; book.Setdateofpublish();
-        sql += "DATE(DATE) = DATE('" + book.Getdateofpublish() + "')";
+        cout<<"         STARTING DATE OF SEARCH (YYYY-MM-DD) : "; history.Setstarting_date();
+        cout<<"         STOPPING DATE OF SEARCH (YYYY-MM-DD) : "; history.Setstopping_date();
+        sql += "DATE(DATE) BETWEEN DATE('" + history.Getstarting_date() +
+                    "') AND DATE('" + history.Getstopping_date() + "')";
     }
 
     cout<<endl;
@@ -1609,16 +1614,19 @@ void search_for_history()
     if(!flag.particular_object_found)
         cout<<"         SORRY, WE DO NOT HAVE ANY BOOK WITH THIS NAME!          "<<endl;
     cout<<endl;
+    cout<<"             1. SEARCH AGAIN                                     "<<endl;
     if(flag.particular_object_found)
-        cout<<"             1. SHOW DETAILS OF A PARTICULAR HISTORY                    "<<endl;
+        cout<<"             2. SHOW DETAILS OF A PARTICULAR HISTORY                    "<<endl;
+    cout<<endl;
     cout<<"             0. GO BACK TO MAIN MENU                             "<<endl;
     cout<<endl;
     cout<<"         YOUR CHOICE >>> ";
 
     while(cin>>i){
-        if(i == 0)
+        cout<<endl;
+        if(i >= 0 && i <= 1)
             break;
-        if(i == 1 && flag.particular_object_found)
+        if(i == 2 && flag.particular_object_found)
             break;
 
         cout<<"         INVALID INPUT!"<<endl;
@@ -1626,7 +1634,9 @@ void search_for_history()
     }
     if(i == 0)
         return;
-    else if(i == 1){
+    else if(i == 1)
+        search_for_history();
+    else if(i == 2){
         ll h_id;
         cout<<"         HISTORY ID >>> ";
         cin>>h_id;
